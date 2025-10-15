@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html ng-app="eventApp">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AngularJS Event Management</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular-route.min.js"></script>
+    <style>
+      :root {
+        --primary: #00b4d8;
+        --accent: #90e0ef;
+        --bg-light: #f0f4ff;
+        --bg-dark: #1e1e2f;
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --text-light: #333;
+        --text-dark: #f0f0f0;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 20px;
+        transition: background 0.5s, color 0.5s;
+        background: linear-gradient(135deg, #00b4d8, #0077b6);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+      }
+
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      body.light {
+        color: var(--text-light);
+      }
+
+      body.dark {
+        color: var(--text-dark);
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 40px;
+        margin-bottom: 30px;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      nav {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      nav a {
+        margin: 0 10px;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 30px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+        color: white;
+        transition: transform 0.3s, background-color 0.3s;
+      }
+
+      nav a:hover {
+        transform: scale(1.1);
+        background-color: var(--accent);
+        color: #000;
+      }
+
+      .theme-toggle {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      button {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+        background-color: var(--accent);
+        color: #000;
+        box-shadow: 0 0 10px var(--accent);
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+      }
+
+      button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px var(--accent);
+      }
+
+      form {
+        max-width: 500px;
+        margin: auto;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+      }
+
+      form label {
+        font-weight: bold;
+        display: block;
+        margin-top: 10px;
+        color: white;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(5px);
+      }
+
+      .radio-group label {
+        margin-right: 20px;
+        color: white;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        max-width: 800px;
+        margin: auto;
+      }
+
+      li {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        color: white;
+        transition: transform 0.3s;
+      }
+
+      li:hover {
+        transform: translateY(-5px);
+      }
+
+      .event-name {
+        font-size: 22px;
+        font-weight: bold;
+      }
+
+      .event-date,
+      .event-location,
+      .event-type {
+        font-size: 16px;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <center>
+  <body ng-controller="eventController">
+    <h1>Event Management System</h1>
+    <div class="theme-toggle">
+      <button ng-click="toggleTheme()">Toggle Theme</button>
+    </div>
+    <nav>
+      <a href="#!/list">Event List</a>
+      <a href="#!/create">Create Event</a>
+      <a href="#!/party">Party Events</a>
+      <a href="#!/professional">Professional Events</a>
+    </nav>
+    <div ng-view></div>
+    <script>
+      var app = angular.module("eventApp", ["ngRoute"]);
+
+      app.config(function ($routeProvider) {
+        $routeProvider
+
+          .when("/list", {
+            template: `
+              
+                <h2>All Events</h2>
+
+              <ul>
+                <li ng-repeat="event in events">
+                  <div class="event-name">{{ event.name }}</div>
+                  <div class="event-date">Date: {{ event.date }}</div>
+                  <div class="event-location">Location: {{ event.location }}</div>
+                  <div class="event-type">Type: {{ event.type || 'Unassigned' }}</div>
+                  <button ng-click="assignType(event, 'Party')">Add to Party</button>
+                  <button ng-click="assignType(event, 'Professional')">Add to Professional</button>
+                </li>
+              </ul>
+            `,
+          })
+          .when("/create", {
+            template: `
+              <h2>Create New Event</h2>
+              <form ng-submit="addEvent()">
+                <label>Name:</label>
+                <input ng-model="newEvent.name" required>
+                <label>Date:</label>
+                <input ng-model="newEvent.date" type="date" required>
+                <label>Location:</label>
+                <input ng-model="newEvent.location" required>
+                <label>Type:</label>
+                <div class="radio-group">
+                  <label>
+                    <input type="radio" ng-model="newEvent.type" value="Party" name="eventType" required>
+                    Party
+                  </label>
+                  <label>
+                    <input type="radio" ng-model="newEvent.type" value="Professional" name="eventType" required>
+                    Professional
+                  </label>
+                </div>
+                <button type="submit">Add Event</button>
+              </form>
+            `,
+          })
+          .when("/party", {
+            template: `
+              <h2>Party Events</h2>
+              <ul>
+                <li ng-repeat="event in partyEvents">
+                  <div class="event-name">{{ event.name }}</div>
+                  <div class="event-date">Date: {{ event.date }}</div>
+                  <div class="event-location">Location: {{ event.location }}</div>
+                </li>
+              </ul>
+            `,
+          })
+          .when("/professional", {
+            template: `
+              <h2>Professional Events</h2>
+              <ul>
+                <li ng-repeat="event in professionalEvents">
+                  <div class="event-name">{{ event.name }}</div>
+                  <div class="event-date">Date: {{ event.date | date:'yyyy-MM-dd' }}</div>
+                  <div class="event-location">Location: {{ event.location }}</div>
+                </li>
+              </ul>
+            `,
+          })
+          .otherwise({ redirectTo: "/list" });
+      });
+
+      app.controller("eventController", function ($scope) {
+        $scope.theme = "light";
+        document.body.className = $scope.theme;
+
+        $scope.toggleTheme = function () {
+          $scope.theme = $scope.theme === "light" ? "dark" : "light";
+          document.body.className = $scope.theme;
+        };
+
+        $scope.events = [
+          {
+            name: "AngularJS Meetup",
+            date: "2025-10-20",
+            location: "Mumbai",
+            type: "Professional",
+          },
+          {
+            name: "Birthday Bash",
+            date: "2025-11-05",
+            location: "Pune",
+            type: "Party",
+          },
+        ];
+
+        $scope.partyEvents = $scope.events.filter((e) => e.type === "Party");
+        $scope.professionalEvents = $scope.events.filter(
+          (e) => e.type === "Professional"
+        );
+        $scope.newEvent = {};
+
+        $scope.addEvent = function () {
+          $scope.events.push($scope.newEvent);
+          if ($scope.newEvent.type === "Party") {
+            $scope.partyEvents.push($scope.newEvent);
+          } else if ($scope.newEvent.type === "Professional") {
+            $scope.professionalEvents.push($scope.newEvent);
+          }
+          alert("Event added: " + $scope.newEvent.name);
+          $scope.newEvent = {};
+          window.location.href = "#!/list";
+        };
+
+        $scope.assignType = function (event, type) {
+          event.type = type;
+
+          if (type === "Party" && !$scope.partyEvents.includes(event)) {
+            $scope.partyEvents.push(event);
+          } else if (
+            type === "Professional" &&
+            !$scope.professionalEvents.includes(event)
+          ) {
+            $scope.professionalEvents.push(event);
+          }
+
+          alert('Event "' + event.name + '" added to ' + type + " Events");
+        };
+      });
+    </script>
+    </center>
+  </body>
+</html>
+
+
